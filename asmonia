@@ -1,0 +1,166 @@
+#! /bin/bash
+#
+# Nagios plugin for ASMONIA
+# Written by Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
+# Last Modified: 2012-12-14
+#
+# Usage: ./asmonia 
+#
+# Description:
+#
+# This plugin returns the state of the opensips SIP server.
+#
+# Output:
+#
+# Depending on the thresholds it will return the appropriate state of the
+# server
+#
+# Notes:
+#
+# Warning threshold is 2
+# Critical threshold is 5
+#
+# Examples:
+#
+# Check for logged in users and return warning state at 10 and critical state
+# at 50
+#
+#   asmonia -M users -w 10 -c 50
+#
+
+# opensipsctl binary
+OPENSIPSCTL="/usr/local/bin/opensips/sbin/opensipsctl"
+# OPENSIPSCTL="/Users/fallenbeck/src/asmonia/opensipsctl_dummy"
+# OPENSIPSCTL="/home/fallenbeck/opensipsctl_dummy"
+
+ECHO="/bin/echo"
+CAT="/bin/cat"
+
+# States
+STATE_OK=0
+STATE_WARNING=1
+STATE_CRICITAL=2
+STATE_UNKNOWN=3
+
+# Script settings
+PROGNAME=`/usr/bin/basename $0`
+PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+REVISION="0.1"
+
+
+print_usage() {
+    echo "Usage: $PROGNAME -M users -w 3 -c 10"
+    echo "Usage: $PROGNAME --help"
+    echo "Usage: $PROGNAME --version"
+}
+
+print_help() {
+    print_revision $PROGNAME $REVISION
+    echo ""
+    print_usage
+    echo ""
+    echo "ASMONIA openSIPS plugin for Nagios"
+    echo ""
+    support
+}
+
+# Make sure the correct number of command line
+# arguments have been supplied
+
+if [ $# -lt 1 ]; then
+    print_usage
+    exit $STATE_UNKNOWN
+fi
+
+# Grab the command line arguments
+
+#logfile=$1
+#oldlog=$2
+#query=$3
+threshold_warning=2
+threshold_critical=5
+exitstatus=$STATE_WARNING #default
+while test -n "$1"; do
+    case "$1" in
+        --help)
+            print_help
+            exit $STATE_OK
+            ;;
+        -h)
+            print_help
+            exit $STATE_OK
+            ;;
+        --version)
+            print_revision $PROGNAME $REVISION
+            exit $STATE_OK
+            ;;
+        -V)
+            print_revision $PROGNAME $REVISION
+            exit $STATE_OK
+            ;;
+        --metric)
+            metric=$2
+            shift
+            ;;
+        -M)
+            metric=$2
+            shift
+            ;;
+        -x)
+            exitstatus=$2
+            shift
+            ;;
+        --exitstatus)
+            exitstatus=$2
+            shift
+            ;;
+        -w)
+            threshold_warning=$2
+            shift
+            ;;
+        -c)
+            threshold_critical=$2
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            print_usage
+            exit $STATE_UNKNOWN
+            ;;
+    esac
+    shift
+done
+
+
+# If openSIPS ctrl binary does not exist, exit
+if [ ! -e $OPENSIPSCTL ]; then
+    $ECHO "Could not find opensipsctl!\n"
+    exit $STATE_UNKNOWN
+elif [ ! -x $OPENSIPSCTL ]; then
+    $ECHO "Could not execute opensipsctl!\n"
+    exit $STATE_UNKNOWN
+fi
+
+if [ $metric = "users" ]; then
+    CMD="$OPENSIPSCTL fifo get_statistics usrloc:"
+    users=`$CMD | grep "location-users" | awk '{ print $3 }'`
+
+    if [ -z $users ]; then
+        $ECHO "ASMONIA UNKNOWN - Could not determine number of users"
+        exitstatus=$STATE_UNKNOWN
+    elif [ $users -ge $threshold_critical ]; then
+        $ECHO "ASMONIA CRITICAL - $users openSIPS users"
+        exitstatus=$STATE_CRICITAL
+    elif [ $users -ge $threshold_warning ]; then
+        $ECHO "ASMONIA WARNING - $users openSIPS users"
+        exitstatus=$STATE_WARNING
+    else
+        $ECHO "ASMONIA OK - $users openSIPS users"
+        exitstatus=$STATE_OK
+    fi
+else
+    $ECHO "Metric $metric unknown!\n"
+    exitstatus=$STATE_UNKNOWN
+fi
+
+exit $exitstatus
