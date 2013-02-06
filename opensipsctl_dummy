@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# This is a dummy openSIPSctl script for testing purposes
+# Written by Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
+# Last Modified: 2012-12-13
+#
+
+ECHO="/bin/echo"
+
+if [ $3 = "usrloc:" ]; then
+	# $ECHO "usrloc:registered_users = 200\n"
+	# $ECHO "usrloc:location-users = 200\n"
+	# $ECHO "usrloc:location-contacts = 200\n"
+	# $ECHO "usrloc:location-expires = 2\n"
+	$ECHO "usrloc:registered_users = 200"
+	$ECHO "usrloc:location-users = 201"
+	$ECHO "usrloc:location-contacts = 200"
+	$ECHO "usrloc:location-expires = 2"
+fi
