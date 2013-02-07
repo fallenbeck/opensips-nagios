@@ -1,0 +1,95 @@
+openSIPS Nagios Plugin
+Installation Instructions
+
+
+Introduction
+------------
+
+The host on which the asmonia script should be run must provide the
+opensipsctl program which is usually included by openSIPS. This script allows
+to query the current state of the openSIPS server.
+Usually the script resides in /usr/local/bin/opensips/sbin/opensipsctl
+In any other case the asmonia-script needs to be updated and the correct
+location of opensips must be configured in $OPENSIPSCTL.
+
+If you want to have an extended howto describing the installation and
+configuration of Nagios please use their documentation (or $searchengine).
+This part briefly describes the configuration of Nagios if you want to add
+this script to your environment.
+
+For the rest of this document, we use the term Nagios server for the computer
+runs the Nagios monitoring tools and the term Nagios client which denotes the
+machine running openSIPS (which we want to monitor).
+
+
+Nagios Client
+-------------
+1. First we need to install the asmonia script to each host which should be
+monitored. It needs to be installed to /usr/lib/nagios/plugins/
+If the client is able to access our project server the most recent version of
+the asmonia script can be easily fetched by calling:
+	wget http://sas-git.aisec.fraunhofer.de/projects/asmonia-nagios/repository/revisions/origin/raw/asmonia
+
+2. NRPE needs to be configured correctly. NRPE will be called by Nagios so
+we need to make the asmonia script known to the service. This will be done
+in the file /etc/nagios/nrpe.cfg by adding some lines:
+	command[opensips_users]=/usr/lib/nagios/plugins/asmonia -M location-users -w 3 -c 10
+	command[opensips_dialogs]=/usr/lib/nagios/plugins/asmonia -M active_dialogs -w 3 -c 10
+Which lines to add depents on your needs. You may query every metric supported
+by opensipsctl (except udp-load) and you are free to specify the command name.
+This name is important when setting up the Nagios server. You need to
+remember it.
+
+3. The NRPE service needs to be restarted to load its modified configuration:
+	service nagios-nrpe-server restart
+	(or: /etc/init.d/nagios-nrpe-server restart)
+
+
+Nagios Server
+-------------
+1. We need to specify the host(s) we want to monitor. This is done in the
+file /etc/nagios3/objects/hosts.cfg:
+define host{
+        use             linux-host
+        host_name       opensips-1
+        alias           OpenSIPS-1 server
+        address         opensips-1
+        hostgroups      debian-servers, ssh-servers, opensips-servers
+}
+define host{
+        use             linux-host
+        host_name       opensips-2
+        alias           OpenSIPS-2 server
+        address         opensips-2
+        hostgroups      debian-servers, ssh-servers, opensips-servers
+}
+
+2. We need to define the hostgroup opensips-servers which has been used in 
+the hosts definition above. This will be done in the file
+/etc/nagios3/objects/hostgroups.cfg:
+define hostgroup{
+        hostgroup_name  opensips-servers
+        alias           OpenSIPS Servers
+}
+
+3. We need to define the services we want to monitor. This will be done in
+the file /etc/nagios3/objects/services.cfg:
+define service{
+        use                     generic-service
+        hostgroup_name          opensips-servers
+        service_description     Registered OpenSIPS Users
+        check_command           check_nrpe_1arg!opensips_users
+}
+define service{
+        use                     generic-service
+        hostgroup_name          opensips-servers
+        service_description     Active OpenSIPS Dialogs
+        check_command           check_nrpe_1arg!opensips_dialogs
+}
+You need to define a service for each metric that you will display in the
+Nagios dashboard. Please not that you provide the command name in the
+check_command settings which you have defined on the Nagios Client earlier.
+
+Finally, Nagios needs to be restarted. This can be done by calling
+	service nagios3 restart
+	(or: /etc/init.d/nagios3 restart)
