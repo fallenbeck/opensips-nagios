@@ -5,11 +5,11 @@ Installation Instructions
 Introduction
 ------------
 
-The host on which the asmonia script should be run must provide the
+The host on which the opensips script should be run must provide the
 opensipsctl program which is usually included by openSIPS. This script allows
 to query the current state of the openSIPS server.
 Usually the script resides in /usr/local/bin/opensips/sbin/opensipsctl
-In any other case the asmonia-script needs to be updated and the correct
+In any other case the opensips script needs to be updated and the correct
 location of opensips must be configured in $OPENSIPSCTL.
 
 If you want to have an extended howto describing the installation and
@@ -24,17 +24,17 @@ machine running openSIPS (which we want to monitor).
 
 Nagios Client
 -------------
-1. First we need to install the asmonia script to each host which should be
+1. First we need to install the opensips script to each host which should be
 monitored. It needs to be installed to /usr/lib/nagios/plugins/
-If the client is able to access our project server the most recent version of
-the asmonia script can be easily fetched by calling:
-	wget http://sas-git.aisec.fraunhofer.de/projects/asmonia-nagios/repository/revisions/origin/raw/asmonia
+If the client is able to access the internet the most recent version of
+the opensips script can be easily fetched by calling:
+	wget https://raw.github.com/fallenbeck/opensips-nagios/master/opensips
 
 2. NRPE needs to be configured correctly. NRPE will be called by Nagios so
-we need to make the asmonia script known to the service. This will be done
+we need to make the opensips script known to the service. This will be done
 in the file /etc/nagios/nrpe.cfg by adding some lines:
-	command[opensips_users]=/usr/lib/nagios/plugins/asmonia -M location-users -w 3 -c 10
-	command[opensips_dialogs]=/usr/lib/nagios/plugins/asmonia -M active_dialogs -w 3 -c 10
+	command[opensips_users]=/usr/lib/nagios/plugins/opensips -M location-users -w 3 -c 10
+	command[opensips_dialogs]=/usr/lib/nagios/plugins/opensips -M active_dialogs -w 3 -c 10
 Which lines to add depents on your needs. You may query every metric supported
 by opensipsctl (except udp-load) and you are free to specify the command name.
 This name is important when setting up the Nagios server. You need to
