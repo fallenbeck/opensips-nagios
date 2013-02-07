@@ -1,19 +1,143 @@
 #!/bin/sh
 #
-# This is a dummy openSIPSctl script for testing purposes
+# This is a dummy opensipsctl script for testing purposes
 # Written by Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
-# Last Modified: 2012-12-13
+# Last Modified: 2013-02-07
 #
 
-ECHO="/bin/echo"
+OUTPUT="core:rcv_requests = 4132
+core:rcv_replies = 3378
+core:fwd_requests = 1128
+core:fwd_replies = 0
+core:drop_requests = 0
+core:drop_replies = 0
+core:err_requests = 0
+core:err_replies = 0
+core:bad_URIs_rcvd = 0
+core:unsupported_methods = 0
+core:bad_msg_hdr = 0
+core:timestamp = 83198
+shmem:total_size = 134217728
+shmem:used_size = 3091544
+shmem:real_used_size = 3372776
+shmem:max_used_size = 7657064
+shmem:free_size = 130844952
+shmem:fragments = 9512
+net:waiting_udp = 0
+net:waiting_tcp = 0
+sl:1xx_replies = 0
+sl:2xx_replies = 754
+sl:3xx_replies = 0
+sl:4xx_replies = 0
+sl:5xx_replies = 0
+sl:6xx_replies = 0
+sl:sent_replies = 754
+sl:sent_err_replies = 0
+sl:received_ACKs = 0
+tm:received_replies = 3378
+tm:relayed_replies = 3349
+tm:local_replies = 3384
+tm:UAS_transactions = 2250
+tm:UAC_transactions = 2256
+tm:2xx_transactions = 2250
+tm:3xx_transactions = 0
+tm:4xx_transactions = 2256
+tm:5xx_transactions = 0
+tm:6xx_transactions = 0
+tm:inuse_transactions = 0
+uri:positive checks = 0
+uri:negative_checks = 0
+usrloc:registered_users = 0
+usrloc:location-users = 0
+usrloc:location-contacts = 0
+usrloc:location-expires = 420
+registrar:max_expires = 0
+registrar:max_contacts = 0
+registrar:default_expire = 3600
+registrar:accepted_regs = 754
+registrar:rejected_regs = 0
+dialog:active_dialogs = 5
+dialog:early_dialogs = 0
+dialog:processed_dialogs = 1128
+dialog:expired_dialogs = 1128
+dialog:failed_dialogs = 0
+pkmem:0-total_size = 4194304
+pkmem:0-used_size = 104584
+pkmem:0-real_used_size = 150208
+pkmem:0-max_used_size = 150208
+pkmem:0-free_size = 4044096
+pkmem:0-fragments = 2
+pkmem:1-total_size = 4194304
+pkmem:1-used_size = 134160
+pkmem:1-real_used_size = 183120
+pkmem:1-max_used_size = 190144
+pkmem:1-free_size = 4011184
+pkmem:1-fragments = 69
+pkmem:2-total_size = 4194304
+pkmem:2-used_size = 112880
+pkmem:2-real_used_size = 158528
+pkmem:2-max_used_size = 158528
+pkmem:2-free_size = 4035776
+pkmem:2-fragments = 1
+pkmem:3-total_size = 4194304
+pkmem:3-used_size = 112448
+pkmem:3-real_used_size = 157952
+pkmem:3-max_used_size = 157952
+pkmem:3-free_size = 4036352
+pkmem:3-fragments = 2
+pkmem:4-total_size = 4194304
+pkmem:4-used_size = 112448
+pkmem:4-real_used_size = 157952
+pkmem:4-max_used_size = 157952
+pkmem:4-free_size = 4036352
+pkmem:4-fragments = 2
+pkmem:5-total_size = 4194304
+pkmem:5-used_size = 112448
+pkmem:5-real_used_size = 157952
+pkmem:5-max_used_size = 157952
+pkmem:5-free_size = 4036352
+pkmem:5-fragments = 2
+pkmem:6-total_size = 4194304
+pkmem:6-used_size = 119488
+pkmem:6-real_used_size = 166552
+pkmem:6-max_used_size = 172480
+pkmem:6-free_size = 4027752
+pkmem:6-fragments = 63
+pkmem:7-total_size = 4194304
+pkmem:7-used_size = 119504
+pkmem:7-real_used_size = 166592
+pkmem:7-max_used_size = 172576
+pkmem:7-free_size = 4027712
+pkmem:7-fragments = 64
+pkmem:8-total_size = 4194304
+pkmem:8-used_size = 119368
+pkmem:8-real_used_size = 166456
+pkmem:8-max_used_size = 172424
+pkmem:8-free_size = 4027848
+pkmem:8-fragments = 64
+pkmem:9-total_size = 4194304
+pkmem:9-used_size = 119488
+pkmem:9-real_used_size = 166552
+pkmem:9-max_used_size = 172432
+pkmem:9-free_size = 4027752
+pkmem:9-fragments = 63
+pkmem:10-total_size = 4194304
+pkmem:10-used_size = 101224
+pkmem:10-real_used_size = 146152
+pkmem:10-max_used_size = 146520
+pkmem:10-free_size = 4048152
+pkmem:10-fragments = 10
+pkmem:11-total_size = 4194304
+pkmem:11-used_size = 124824
+pkmem:11-real_used_size = 171264
+pkmem:11-max_used_size = 173808
+pkmem:11-free_size = 4023040
+pkmem:11-fragments = 23
+load:udp:10.8.0.1:5060-load = 0
+load:udp:192.168.132.23:5060-load = 0"
 
-if [ $3 = "usrloc:" ]; then
-	# $ECHO "usrloc:registered_users = 200\n"
-	# $ECHO "usrloc:location-users = 200\n"
-	# $ECHO "usrloc:location-contacts = 200\n"
-	# $ECHO "usrloc:location-expires = 2\n"
-	$ECHO "usrloc:registered_users = 200"
-	$ECHO "usrloc:location-users = 201"
-	$ECHO "usrloc:location-contacts = 200"
-	$ECHO "usrloc:location-expires = 2"
+if [ $3 = "all" ]; then
+	echo "$OUTPUT"
+elif [ ! -z $3 ]; then
+	echo "$OUTPUT" | grep "$3"
 fi
