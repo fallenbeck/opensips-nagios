@@ -2,13 +2,13 @@
 #
 # Nagios plugin for ASMONIA
 # Written by Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
-# Last Modified: 2012-12-14
+# Last Modified: 2013-02-07
 #
-# Usage: ./asmonia 
+# Usage: ./asmonia -M <metric> [-w <thres_warning>] [-c <thres_critical>]
 #
 # Description:
 #
-# This plugin returns the state of the opensips SIP server.
+# This plugin returns the state of the openSIPS SIP server.
 #
 # Output:
 #
@@ -17,8 +17,8 @@
 #
 # Notes:
 #
-# Warning threshold is 2
-# Critical threshold is 5
+# Standard warning threshold is 2
+# Standard critical threshold is 5
 #
 # Examples:
 #
@@ -29,12 +29,8 @@
 #
 
 # opensipsctl binary
-OPENSIPSCTL="/usr/local/bin/opensips/sbin/opensipsctl"
-# OPENSIPSCTL="/Users/fallenbeck/src/asmonia/opensipsctl_dummy"
-# OPENSIPSCTL="/home/fallenbeck/opensipsctl_dummy"
-
-ECHO="/bin/echo"
-CAT="/bin/cat"
+#OPENSIPSCTL="/usr/local/bin/opensips/sbin/opensipsctl"
+OPENSIPSCTL="./opensipsctl_dummy" # dummy script for testing purposes
 
 # States
 STATE_OK=0
@@ -44,12 +40,12 @@ STATE_UNKNOWN=3
 
 # Script settings
 PROGNAME=`/usr/bin/basename $0`
-PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
-REVISION="0.1"
-
+#PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+REVISION="0.2"
 
 print_usage() {
-    echo "Usage: $PROGNAME -M users -w 3 -c 10"
+    echo "Usage: $PROGNAME -M users [-w 3] [-c 10]"
+    echo "Usage: $PROGNAME -M dialogs [-w 3] [-c 10]"
     echo "Usage: $PROGNAME --help"
     echo "Usage: $PROGNAME --version"
 }
@@ -64,22 +60,19 @@ print_help() {
     support
 }
 
+# Define default values
+threshold_warning=2
+threshold_critical=5
+exitstatus=$STATE_UNKNOWN #default
+
 # Make sure the correct number of command line
 # arguments have been supplied
-
 if [ $# -lt 1 ]; then
     print_usage
     exit $STATE_UNKNOWN
 fi
 
-# Grab the command line arguments
-
-#logfile=$1
-#oldlog=$2
-#query=$3
-threshold_warning=2
-threshold_critical=5
-exitstatus=$STATE_WARNING #default
+# Parse command line arguments
 while test -n "$1"; do
     case "$1" in
         --help)
@@ -91,11 +84,11 @@ while test -n "$1"; do
             exit $STATE_OK
             ;;
         --version)
-            print_revision $PROGNAME $REVISION
+            echo $PROGNAME $REVISION
             exit $STATE_OK
             ;;
         -V)
-            print_revision $PROGNAME $REVISION
+            echo $PROGNAME $REVISION
             exit $STATE_OK
             ;;
         --metric)
@@ -131,36 +124,51 @@ while test -n "$1"; do
     shift
 done
 
-
 # If openSIPS ctrl binary does not exist, exit
-if [ ! -e $OPENSIPSCTL ]; then
-    $ECHO "Could not find opensipsctl!\n"
+if [ -z $OPENSIPSCTL ]; then
+    echo "Path to opensipsctl not specified!"
+    exit $STATE_UNKNOWN
+elif [ ! -e $OPENSIPSCTL ]; then
+    echo "Could not find opensipsctl!"
     exit $STATE_UNKNOWN
 elif [ ! -x $OPENSIPSCTL ]; then
-    $ECHO "Could not execute opensipsctl!\n"
+    echo "Could not execute opensipsctl!"
     exit $STATE_UNKNOWN
 fi
 
-if [ $metric = "users" ]; then
-    CMD="$OPENSIPSCTL fifo get_statistics usrloc:"
-    users=`$CMD | grep "location-users" | awk '{ print $3 }'`
+# Define variables used for output and opensipsctl execution
+tnum=-1;
+tdesc="";
+xbase="$OPENSIPSCTL fifo get_statistics"
 
-    if [ -z $users ]; then
-        $ECHO "ASMONIA UNKNOWN - Could not determine number of users"
-        exitstatus=$STATE_UNKNOWN
-    elif [ $users -ge $threshold_critical ]; then
-        $ECHO "ASMONIA CRITICAL - $users openSIPS users"
-        exitstatus=$STATE_CRICITAL
-    elif [ $users -ge $threshold_warning ]; then
-        $ECHO "ASMONIA WARNING - $users openSIPS users"
-        exitstatus=$STATE_WARNING
-    else
-        $ECHO "ASMONIA OK - $users openSIPS users"
-        exitstatus=$STATE_OK
-    fi
+# Analyze
+# This part of the script can be easily extended if new opensips metrics need
+# to be analyzed.
+if [ $metric = "users" ]; then
+    tnum=`$xbase usrloc: | grep "location-users" | awk '{ print $3 }'`
+    tdesc="active users"
+elif [ $metric = "dialogs" ]; then
+    tnum=`$xbase dialog: | grep "active_dialogs" | awk '{ print $3 }'`
+    tdesc="active dialogs"
 else
-    $ECHO "Metric $metric unknown!\n"
-    exitstatus=$STATE_UNKNOWN
+    echo "Metric $metric unknown!"
+    exit $STATE_UNKNOWN
 fi
 
+# Print result
+if [ $tnum -lt 0 ]; then
+    echo "ASMONIA UNKNOWN - Could not determine $tdesc"
+    exitstatus=$STATE_UNKNOWN
+elif [ $tnum -ge $threshold_critical ]; then
+    echo "ASMONIA CRITICAL - $tnum $tdesc"
+    exitstatus=$STATE_CRICITAL
+elif [ $tnum -ge $threshold_warning ]; then
+    echo "ASMONIA WARNING - $tnum $tdesc"
+    exitstatus=$STATE_WARNING
+else
+    echo "ASMONIA OK - $tnum $tdesc"
+    exitstatus=$STATE_OK
+fi
+
+# Exit script
 exit $exitstatus
