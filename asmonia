@@ -29,8 +29,8 @@
 #
 
 # opensipsctl binary
-#OPENSIPSCTL="/usr/local/bin/opensips/sbin/opensipsctl"
-OPENSIPSCTL="./opensipsctl_dummy" # dummy script for testing purposes
+OPENSIPSCTL="/usr/local/bin/opensips/sbin/opensipsctl"
+#OPENSIPSCTL="./opensipsctl_dummy" # dummy script for testing purposes
 
 # States
 STATE_OK=0
