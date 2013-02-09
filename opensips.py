@@ -41,8 +41,7 @@ import optparse
 class OpenSipsModule:
 	name = "OpenSipsModule"
 	version = '0.1'
-	opensipsctl = '/Users/fallenbeck/src/asmonia/opensipsctl_dummy' # OS X
-	# opensipsctl = '/home/fallenbeck/opensipsctl_dummy' # Linux
+	opensipsctl = './opensipsctl_dummy' # OS X
 	# opensipsctl = '/usr/local/bin/opensips/sbin/opensipsctl' # production
 
 	options = ''
