@@ -50,7 +50,11 @@ class OpenSipsModule:
 	threshold_critical = 5
 	exitstatus = 3 #OpenSipsModuleStates.UNKNOWN
 	test = False
+
+	# Metrics settings
 	metric = "all"
+	desc = ""
+	value = 0
 
 
 	def parse_options(self):
@@ -98,7 +102,7 @@ class OpenSipsModule:
    			exit(self.exitstatus)
 
    		# now we need to parse the output
-   		print "Yay!"
+   		print "%s" % output
 
 
 	def __init__(self):
