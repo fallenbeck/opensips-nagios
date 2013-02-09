@@ -54,6 +54,7 @@ class OpenSipsModule:
 
 
 	def parse_options(self):
+		# command line option parsing
 		from optparse import OptionParser
 		parser = OptionParser()
 		parser.add_option("-v", "--version", action="store_true", dest="show_version", default=False, help="print version and exit")
@@ -74,10 +75,12 @@ class OpenSipsModule:
 		print 'check system environment...'
 		print '  binary used as configured in script: %s' % self.opensipsctl
 		try:
+			# check if file is there and can be opened
    			with open(self.opensipsctl) as f: 
-				p = Popen('%s 1 2 all' % self.opensipsctl, stdout=PIPE, stderr=PIPE, shell=True)
-				output, errors = p.communicate()
-				if p.returncode:
+   				# call the binary and see what happens
+				x = Popen('%s 1 2 all' % self.opensipsctl, stdout=PIPE, stderr=PIPE, shell=True)
+				output, errors = x.communicate()
+				if x.returncode:
 					print 'Error: %s' % errors
 					exit(2)
 				else:
@@ -88,12 +91,21 @@ class OpenSipsModule:
 
 
    	def get_metric(self):
-   		print "The metric (%s) happens here!" % self.metric
+   		x = Popen('%s fifo get_statistics %s' % (self.opensipsctl, self.metric), stdout=PIPE, stderr=PIPE, shell=True)
+   		output, errors = x.communicate()
+   		if x.returncode != 0:
+   			print 'Error: %s' % errors
+   			exit(self.exitstatus)
+
+   		# now we need to parse the output
+   		print "Yay!"
 
 
 	def __init__(self):
+		# first, parse the options
 		self.parse_options()
 
+		# and then deal with it
 		if self.options.show_version:
 			self.print_version()
 		elif self.options.test_config:
@@ -102,10 +114,12 @@ class OpenSipsModule:
 		else:
 			self.get_metric()
 
+		# if you are here, everything went fine!
 		sys.exit(OpenSipsModuleStates.OK)
 
 
 
+# Define the exit codes of the various states
 class OpenSipsModuleStates:
 	OK = 0
 	WARNING = 1
@@ -113,5 +127,6 @@ class OpenSipsModuleStates:
 	UNKNOWN = 3
 
 
+# If called from the command line simply create a new OpenSipsModule instance
 if __name__ == '__main__':
 	OpenSipsModule()
