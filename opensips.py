@@ -28,7 +28,7 @@
 #	asmonia -M users -w 10 -c 50
 '''
 @author: Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
-@copyright: (c) 2012 
+@copyright: (c) 2012-2013
 '''
 
 ## Configuration
