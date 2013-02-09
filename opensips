@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Nagios plugin for openSIPS
 # Written by Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
