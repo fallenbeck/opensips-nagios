@@ -19,9 +19,10 @@ The Nagios plugin is not part of the official openSIPS project.
 Files
 -----
 The following files are relevant for the plugin:
-    opensips               Nagios script which analyzes the openSIPS state
-	opensipsctl_dummy      opensipsctl dummy script for testing purposes
-	INSTALL                Installation instructions
-    README                 This readme file
+    opensips 				Nagios script (bash) to monitor openSIPS
+    opensips.py				Nagios script (Python) to monitor openSIPS
+	opensipsctl_dummy		opensipsctl dummy script for testing purposes
+	INSTALL 				Installation instructions
+    README  				This README file
 
 Installation instructions can be found in the INSTALL file.
