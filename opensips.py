@@ -35,8 +35,11 @@
 import sys
 import os
 import optparse
+import re
 from subprocess import PIPE
 from subprocess import Popen
+from decimal import Decimal
+from optparse import OptionParser
 
 
 class OpenSipsModule:
@@ -53,15 +56,11 @@ class OpenSipsModule:
 
 	# Metrics settings
 	metric = "all"
-	desc = ""
-	value = 0
+	value = -1
 
 
 	def parse_options(self):
 		# command line option parsing
-		from decimal import Decimal
-
-		from optparse import OptionParser
 		parser = OptionParser()
 		parser.add_option("-v", "--version", action="store_true", dest="show_version", default=False, help="print version and exit")
 		parser.add_option("-t", "--test", action="store_true", dest="test_config", default=False, help="test if configuration is working")
@@ -108,14 +107,11 @@ class OpenSipsModule:
 
 
    	def get_metric(self):
-   		# use regular expressions
-   		import re
-
    		# execute output
    		x = Popen('%s fifo get_statistics %s' % (self.opensipsctl, self.metric), stdout=PIPE, stderr=PIPE, shell=True)
    		output, errors = x.communicate()
    		if x.returncode != 0:
-   			print 'Error: %s' % errors
+   			# print 'Error: %s' % errors
    			exit(self.exitstatus)
 
    		# now we need to parse the output
@@ -125,11 +121,32 @@ class OpenSipsModule:
    		for line in output.splitlines(False):
    			# if re.search(r"%s" % self.metric, line):
    			if c.findall(line):
-   				self.value = line.split(" ")[2]
+   				self.value = Decimal(line.split(" ")[2])
    				break
 
 
-   		
+   	def generate_result(self):
+   		# compare value with thresholds
+   		prefix = "openSIPS"
+   		state = "UNKNOWN"
+   		msg = ""
+
+   		if self.value < 0:
+   			state = "UNKNOWN"
+   			self.exitstatus = OpenSipsModuleStates.UNKNOWN
+   		elif self.value >= self.threshold_critical:
+   			state = "CRITICAL"
+   			self.exitstatus = OpenSipsModuleStates.CRITICAL
+   		elif self.value >= self.threshold_warning:
+   			state = "WARNING"
+   			self.exitstatus = OpenSipsModuleStates.WARNING
+   		else:
+   			state = "OK"
+   			self.exitstatus = OpenSipsModuleStates.OK
+
+   		# exit the script
+   		print "%s %s - %d " % (prefix, state, self.value)
+   		exit(self.exitstatus)
 
 
 
@@ -145,6 +162,7 @@ class OpenSipsModule:
 			self.check_config()
 		else:
 			self.get_metric()
+			self.generate_result()
 
 		# if you are here, everything went fine!
 		sys.exit(OpenSipsModuleStates.OK)
