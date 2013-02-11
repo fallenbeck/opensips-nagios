@@ -59,15 +59,23 @@ class OpenSipsModule:
 
 	def parse_options(self):
 		# command line option parsing
+		from decimal import Decimal
+
 		from optparse import OptionParser
 		parser = OptionParser()
 		parser.add_option("-v", "--version", action="store_true", dest="show_version", default=False, help="print version and exit")
 		parser.add_option("-t", "--test", action="store_true", dest="test_config", default=False, help="test if configuration is working")
 		parser.add_option("-M", "--metric", dest="metric", default="all", help="metric to show")
-		parser.add_option("-x", "--exitstatus", dest="state", help="exit with this state")
-		parser.add_option("-w", "--warning", dest="threshold_warning", help="set threshold for warning state")
-		parser.add_option("-c", "--critical", dest="threshold_critical", help="set threshold for critical state")
+		parser.add_option("-x", "--exitstatus", dest="state", default=3, help="exit with this state")
+		parser.add_option("-w", "--warning", dest="threshold_warning", default=2, help="set threshold for warning state")
+		parser.add_option("-c", "--critical", dest="threshold_critical", default=5, help="set threshold for critical state")
 		(self.options, args) = parser.parse_args()
+
+		# store options to global variables
+		self.metric = self.options.metric
+		self.threshold_warning = Decimal(self.options.threshold_warning)
+		self.threshold_critical = Decimal(self.options.threshold_critical)
+		self.exitstatus = Decimal(self.options.state)
 
 
 	def print_version(self):
@@ -97,7 +105,7 @@ class OpenSipsModule:
    		print "  threshold CRITICAL: %d" % self.threshold_critical
    		print "  exit status:        %s" % self.exitstatus
    		exit(self.exitstatus)
-   		
+
 
    	def get_metric(self):
    		# use regular expressions
@@ -111,22 +119,18 @@ class OpenSipsModule:
    			exit(self.exitstatus)
 
    		# now we need to parse the output
-   		# print "%s" % output
-
-   		print "Metric to parse: %s" % self.metric
-
    		c = re.compile(r"%s" % self.metric)
-   		for line in output.splitlines(True):
+   		# result = [c.findall(line) for line in output.splitlines(False)]
+   		# print(result)
+   		for line in output.splitlines(False):
    			# if re.search(r"%s" % self.metric, line):
-   			if len(c.findall(line)) > 0:
-   				print "%s" % line
-   				print "got it"
+   			if c.findall(line):
+   				self.value = line.split(" ")[2]
    				break
-   			# else:
-   			# 	print "no boom"
 
 
-		print "bang"
+   		
+
 
 
 	def __init__(self):
