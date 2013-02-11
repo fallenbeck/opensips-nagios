@@ -2,7 +2,7 @@
 #
 # Nagios plugin for ASMONIA
 # Written by Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
-# Last modified: 2012-12-30
+# Last modified: 2013-02-11
 # 
 # Usage: ./asmonia.py
 #
@@ -25,7 +25,7 @@
 # Examples:
 # Check for logged in users and return warning state at 10 and
 # critical state at 50:
-#	asmonia -M users -w 10 -c 50
+#	asmonia -M active_dialogs -w 10 -c 50
 '''
 @author: Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
 @copyright: (c) 2012-2013
@@ -56,6 +56,7 @@ class OpenSipsModule:
 
 	# Metrics settings
 	metric = "all"
+	description = ""
 	value = -1
 
 
@@ -72,12 +73,14 @@ class OpenSipsModule:
 
 		# store options to global variables
 		self.metric = self.options.metric
+		self.description = self.get_metric_description(self.metric)
 		self.threshold_warning = Decimal(self.options.threshold_warning)
 		self.threshold_critical = Decimal(self.options.threshold_critical)
 		self.exitstatus = Decimal(self.options.state)
 
 
 	def print_version(self):
+		# Just print the version
 		print '%s %s' % (self.name, self.version)
 
 
@@ -106,12 +109,86 @@ class OpenSipsModule:
    		exit(self.exitstatus)
 
 
+   	def get_metric_description(self, metric):
+   		# Provide a human-readable description of the given metric
+   		
+   		# Metrics which are not supported must be specified here
+   		if metric == "udp-load":
+   			print "Metric %s not supported!" % (metric)
+   			exit(OpenSipsModuleStates.UNKNOWN)
+
+   		try:
+   			return {
+				"rcv_requests"			:	"received requests",
+				"rcv_replies"			:	"received replies",
+				"fwd_requests"			:	"forwarded requests",
+				"fwd_replies"			:	"forwarded replies",
+				"drop_requests"			:	"droped requests",
+				"drop_replies"			:	"dropped replies",
+				"err_requests"			:	"bogus replies",
+				"err_replies"			:	"bogus replies",
+				"bad_URIs_rcvd"			:	"bad URIs received",
+				"unsupported_methods"	:	"non-standard methods encountered",
+				"bad_msg_hdr"			:	"bad SIP headers",
+				"timestamp"				:	"seconds running",
+				"tcp-load"				:	"TCP load",
+				"waiting_udp"			:	"UDP waiting buffer size",
+				"waiting_tcp"			:	"TCP waiting buffer size",
+				"waiting_tls"			:	"TLS waiting buffer size",
+				"total_size"			:	"total shared memory",
+				"used_size"				:	"used shared memory",
+				"real_used_size"		:	"used real shared memory (including malloc overhead)",
+				"max_used_size"			:	"maximum used memory",
+				"free_size"				:	"free shared memory",
+				"fragments"				:	"shared memory fragments",
+				"1xx_replies"			:	"1xx replies",
+				"2xx_replies"			:	"2xx replies",
+				"3xx_replies"			:	"3xx replies",
+				"4xx_replies"			:	"4xx replies",
+				"5xx_replies"			:	"5xx replies",
+				"6xx_replies"			:	"6xx replies",
+				"sent_replies"			:	"sent replies",
+				"sent_err_replies"		:	"sent bogus replies",
+				"received_ACKs"			:	"received ACKs",
+				"received_replies"		:	"received replies",
+				"relayed_replies"		:	"relayed replies",
+				"local_replies"			:	"local replies",
+				"UAS_transactions"		:	"transactions created by received requests",
+				"UAC_transactions"		:	"transactions created by local generated requests",
+				"2xx_transactions"		:	"transactions completed with 2xx replies",
+				"3xx_transactions"		:	"transactions completed with 3xx replies",
+				"4xx_transactions"		:	"transactions completed with 4xx replies",
+				"5xx_transactions"		:	"transactions completed with 5xx replies",
+				"6xx_transactions"		:	"transactions completed with 6xx replies",
+				"inuse_transactions"	:	"transactions existing in memory",
+				"positive_checks"		:	"tests executed for which a positive match",
+				"negative_checks"		:	"tests executed for which a negative match",
+				"registered_users"		:	"users in memory for all domains",
+				"location-users"		:	"users in memory",
+				"location-contacts"		:	"contacts in memory",
+				"location-expires"		:	"expired contacts in memory",
+				"max_expires"			:	"max expiration",
+				"max_contacts"			:	"max contacts",
+				"default_expire"		:	"default expiration",
+				"accepted_regs"			:	"accepted registrations",
+				"rejected_regs"			:	"rejected registrations",
+				"active_dialogs"		:	"current active dialogs",
+				"early_dialogs"			:	"early dialogs",
+				"processed_dialogs"		:	"processed dialogs",
+				"expired_dialogs"		:	"expired dialogs",
+				"failed_dialogs"		:	"failed dialogs",
+   			}[metric]
+   		except Exception as e:
+   			print "Unknown metric %s" % (metric)
+   			exit(OpenSipsModuleStates.UNKNOWN)
+
+
    	def get_metric(self):
    		# execute output
    		x = Popen('%s fifo get_statistics %s' % (self.opensipsctl, self.metric), stdout=PIPE, stderr=PIPE, shell=True)
    		output, errors = x.communicate()
    		if x.returncode != 0:
-   			# print 'Error: %s' % errors
+   			#print 'Error: %s' % errors
    			exit(self.exitstatus)
 
    		# now we need to parse the output
@@ -129,7 +206,6 @@ class OpenSipsModule:
    		# compare value with thresholds
    		prefix = "openSIPS"
    		state = "UNKNOWN"
-   		msg = ""
 
    		if self.value < 0:
    			state = "UNKNOWN"
@@ -145,7 +221,7 @@ class OpenSipsModule:
    			self.exitstatus = OpenSipsModuleStates.OK
 
    		# exit the script
-   		print "%s %s - %d " % (prefix, state, self.value)
+   		print "%s %s - %d %s" % (prefix, state, self.value, self.description)
    		exit(self.exitstatus)
 
 
