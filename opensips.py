@@ -86,15 +86,24 @@ class OpenSipsModule:
 				output, errors = x.communicate()
 				if x.returncode:
 					print 'Error: %s' % errors
-					exit(2)
+					self.exitstatus = 2
 				else:
 					print '  opensipsctl binary found.'
 		except IOError as e:
    			print 'Error: %s' % e
-   			exit(1)
-
+   			self.exitstatus = 1
+   		print "  metric to parse:    %s" % self.metric
+   		print "  threshold WARNING:  %d" % self.threshold_warning
+   		print "  threshold CRITICAL: %d" % self.threshold_critical
+   		print "  exit status:        %s" % self.exitstatus
+   		exit(self.exitstatus)
+   		
 
    	def get_metric(self):
+   		# use regular expressions
+   		import re
+
+   		# execute output
    		x = Popen('%s fifo get_statistics %s' % (self.opensipsctl, self.metric), stdout=PIPE, stderr=PIPE, shell=True)
    		output, errors = x.communicate()
    		if x.returncode != 0:
@@ -102,7 +111,22 @@ class OpenSipsModule:
    			exit(self.exitstatus)
 
    		# now we need to parse the output
-   		print "%s" % output
+   		# print "%s" % output
+
+   		print "Metric to parse: %s" % self.metric
+
+   		c = re.compile(r"%s" % self.metric)
+   		for line in output.splitlines(True):
+   			# if re.search(r"%s" % self.metric, line):
+   			if len(c.findall(line)) > 0:
+   				print "%s" % line
+   				print "got it"
+   				break
+   			# else:
+   			# 	print "no boom"
+
+
+		print "bang"
 
 
 	def __init__(self):
