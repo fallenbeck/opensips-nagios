@@ -41,10 +41,10 @@ STATE_UNKNOWN=3
 # Script settings
 PROGNAME=`/usr/bin/basename $0`
 #PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
-REVISION="0.3"
+REVISION="0.4"
 
 print_usage() {
-    echo "Usage: $PROGNAME -M <opensips metric> [-w <thres_warn>] [-c <tresh_crit>]"
+    echo "Usage: $PROGNAME -M <opensips metric> [-w <thres_warn>] [-c <tresh_crit>] [-mt] "
     echo "Usage: $PROGNAME --help"
     echo "Usage: $PROGNAME --version"
 }
@@ -62,6 +62,7 @@ print_help() {
 # Define default values
 threshold_warning=2
 threshold_critical=5
+minimum_thresholds=0
 exitstatus=$STATE_UNKNOWN #default
 
 # Make sure the correct number of command line
@@ -113,6 +114,12 @@ while test -n "$1"; do
         -c)
             threshold_critical=$2
             shift
+            ;;
+        --minimum_thresholds)
+            minimum_thresholds=1
+            ;;
+        -mt)
+            minimum_thresholds=1
             ;;
         *)
             echo "Unknown argument: $1"
@@ -281,6 +288,17 @@ elif [ $tnum = "Not" ]; then
 elif [ $tnum -lt 0 ]; then
     echo "openSIPS UNKNOWN - Could not determine metric $metric"
     exitstatus=$STATE_UNKNOWN
+    
+elif [ $minimum_thresholds -eq 1 -a $tnum -le $threshold_critical ]; then
+    echo "openSIPS CRITICAL - $tnum $tdesc"
+    exitstatus=$STATE_CRICITAL
+elif [  $minimum_thresholds -eq 1 -a $tnum -le $threshold_warning ]; then
+    echo "openSIPS WARNING - $tnum $tdesc"
+    exitstatus=$STATE_WARNING
+elif [ $minimum_thresholds -eq 1 ]; then
+    echo "openSIPS OK - $tnum $tdesc"
+    exitstatus=$STATE_OK
+    
 elif [ $tnum -ge $threshold_critical ]; then
     echo "openSIPS CRITICAL - $tnum $tdesc"
     exitstatus=$STATE_CRICITAL
