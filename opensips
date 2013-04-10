@@ -273,6 +273,13 @@ else
     exit $STATE_UNKNOWN
 fi
 
+# when return code != 0 we had an error!
+$xbase $metric >/dev/null
+if [ $? -ne 0 ]; then
+    echo "openSIPS UNKNOWN - Error while executing opensipsctl"
+    exit $STATE_UNKNOWN
+fi
+
 # check if we still need to get the value
 if [ $tnum -lt 0 ]; then
     tnum=`$xbase $metric | awk '{ print $3 }'`
