@@ -64,6 +64,7 @@ threshold_warning=2
 threshold_critical=5
 minimum_thresholds=0
 exitstatus=$STATE_UNKNOWN #default
+exitstatus_set_manually=0
 
 # Make sure the correct number of command line
 # arguments have been supplied
@@ -105,6 +106,7 @@ while test -n "$1"; do
             ;;
         --exitstatus)
             exitstatus=$2
+            exitstatus_set_manually=1
             shift
             ;;
         -w)
@@ -132,18 +134,20 @@ done
 
 # If existatus has been set, return immediately
 # with specified exitstatus
-if [ $exitstatus = "0" ]; then
-    echo "openSIPS OK - This metric will always return OK"
-    exit $STATE_OK
-elif [ $exitstatus = "1" ]; then
-    echo "openSIPS WARNING - This metric will always return WARNING"
-    exit $STATE_WARNING
-elif [ $exitstatus = "2" ]; then
-    echo "openSIPS CRITICAL - This metric will always return CRITICAL"
-    exit $STATE_CRICITAL
-elif [ $exitstatus = "3" ]; then
-    echo "openSIPS UNKNOWN - This metric will always return UNKNOWN"
-    exit $STATE_UNKNOWN
+if [ $exitstatus_set_manually -ne 0 ]; then
+    if [ $exitstatus = "0" ]; then
+        echo "openSIPS OK - This metric will always return OK"
+        exit $STATE_OK
+    elif [ $exitstatus = "1" ]; then
+        echo "openSIPS WARNING - This metric will always return WARNING"
+        exit $STATE_WARNING
+    elif [ $exitstatus = "2" ]; then
+        echo "openSIPS CRITICAL - This metric will always return CRITICAL"
+        exit $STATE_CRICITAL
+    elif [ $exitstatus = "3" ]; then
+        echo "openSIPS UNKNOWN - This metric will always return UNKNOWN"
+        exit $STATE_UNKNOWN
+    fi
 fi
 
 # If openSIPS ctrl binary does not exist, exit
