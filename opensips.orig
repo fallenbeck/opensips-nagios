@@ -1,0 +1,340 @@
+#!/bin/sh
+#
+# Nagios plugin for openSIPS
+# Written by Niels Fallenbeck <niels.fallenbeck@aisec.fraunhofer.de>
+# Last Modified: 2013-02-07
+#
+# Usage: ./opensips -M <metric> [-w <thres_warning>] [-c <thres_critical>]
+#
+# Description:
+#
+# This plugin returns the state of the openSIPS SIP server.
+#
+# Output:
+#
+# Depending on the thresholds it will return the appropriate state of the
+# server
+#
+# Notes:
+#
+# Standard warning threshold is 2
+# Standard critical threshold is 5
+#
+# Examples:
+#
+# Check for logged in users and return warning state at 10 and critical state
+# at 50
+#
+#   ./opensips -M location-users -w 10 -c 50
+#
+
+# opensipsctl binary
+OPENSIPSCTL="/usr/local/bin/opensips/sbin/opensipsctl"
+#OPENSIPSCTL="./opensipsctl_dummy" # dummy script for testing purposes
+
+# States
+STATE_OK=0
+STATE_WARNING=1
+STATE_CRICITAL=2
+STATE_UNKNOWN=3
+
+# Script settings
+PROGNAME=`/usr/bin/basename $0`
+#PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+REVISION="0.4"
+
+print_usage() {
+    echo "Usage: $PROGNAME -M <opensips metric> [-w <thres_warn>] [-c <tresh_crit>] [-mt] "
+    echo "Usage: $PROGNAME --help"
+    echo "Usage: $PROGNAME --version"
+}
+
+print_help() {
+    print_revision $PROGNAME $REVISION
+    echo ""
+    print_usage
+    echo ""
+    echo "Nagios openSIPS plugin"
+    echo ""
+    support
+}
+
+# Define default values
+threshold_warning=2
+threshold_critical=5
+minimum_thresholds=0
+exitstatus=$STATE_UNKNOWN #default
+
+# Make sure the correct number of command line
+# arguments have been supplied
+if [ $# -lt 1 ]; then
+    print_usage
+    exit $STATE_UNKNOWN
+fi
+
+# Parse command line arguments
+while test -n "$1"; do
+    case "$1" in
+        --help)
+            print_help
+            exit $STATE_OK
+            ;;
+        -h)
+            print_help
+            exit $STATE_OK
+            ;;
+        --version)
+            echo $PROGNAME $REVISION
+            exit $STATE_OK
+            ;;
+        -V)
+            echo $PROGNAME $REVISION
+            exit $STATE_OK
+            ;;
+        --metric)
+            metric=$2
+            shift
+            ;;
+        -M)
+            metric=$2
+            shift
+            ;;
+        -x)
+            exitstatus=$2
+            shift
+            ;;
+        --exitstatus)
+            exitstatus=$2
+            shift
+            ;;
+        -w)
+            threshold_warning=$2
+            shift
+            ;;
+        -c)
+            threshold_critical=$2
+            shift
+            ;;
+        --minimum_thresholds)
+            minimum_thresholds=1
+            ;;
+        -mt)
+            minimum_thresholds=1
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            print_usage
+            exit $STATE_UNKNOWN
+            ;;
+    esac
+    shift
+done
+
+# If existatus has been set, return immediately
+<<<<<<< HEAD
+# with specified exitstatus
+=======
+>>>>>>> b59c00086756c207baada8f795e10da175e2d183
+if [ $exitstatus = "0" ]; then
+    echo "openSIPS OK - This metric will always return OK"
+    exit $STATE_OK
+elif [ $exitstatus = "1" ]; then
+    echo "openSIPS WARNING - This metric will always return WARNING"
+    exit $STATE_WARNING
+elif [ $exitstatus = "2" ]; then
+    echo "openSIPS CRITICAL - This metric will always return CRITICAL"
+    exit $STATE_CRICITAL
+elif [ $exitstatus = "3" ]; then
+    echo "openSIPS UNKNOWN - This metric will always return UNKNOWN"
+    exit $STATE_UNKNOWN
+fi
+
+# If openSIPS ctrl binary does not exist, exit
+if [ -z $OPENSIPSCTL ]; then
+    echo "openSIPS UNKNOWN - Path to opensipsctl not specified!"
+    exit $STATE_UNKNOWN
+elif [ ! -e $OPENSIPSCTL ]; then
+    echo "openSIPS UNKNOWN - Could not find opensipsctl!"
+    exit $STATE_UNKNOWN
+elif [ ! -x $OPENSIPSCTL ]; then
+    echo "openSIPS UNKNOWN - Could not execute opensipsctl!"
+    exit $STATE_UNKNOWN
+fi
+
+# Define variables used for output and opensipsctl execution
+tnum=-1
+xbase="$OPENSIPSCTL fifo get_statistics"
+
+# Analyze
+if [ $metric = "udp-load" ]; then
+    echo "Metric udp-load not supported!"
+    exit $STATE_UNKNOWN
+    # tnum=`$xbase load: | grep "udp:$ip:$port-load" | awk '{ print $3 }'`
+    # tdesc="UDP load on $ip:$port"
+elif [ $metric = "rcv_requests" ]; then
+    tdesc="received requests"
+elif [ $metric = "rcv_replies" ]; then
+    tdesc="received replies"
+elif [ $metric = "fwd_requests" ]; then
+    tdesc="forwarded requests"
+elif [ $metric = "fwd_replies" ]; then
+    tdesc="forwarded replies"
+elif [ $metric = "drop_requests" ]; then
+    tdesc="droped requests"
+elif [ $metric = "drop_replies" ]; then
+    tdesc="dropped replies"
+elif [ $metric = "err_requests" ]; then
+    tdesc="bogus replies"
+elif [ $metric = "err_replies" ]; then
+    tdesc="bogus replies"
+elif [ $metric = "bad_URIs_rcvd" ]; then
+    tdesc="bad URIs received"
+elif [ $metric = "unsupported_methods" ]; then
+    tdesc="non-standard methods encountered"
+elif [ $metric = "bad_msg_hdr" ]; then
+    tdesc="bad SIP headers"
+elif [ $metric = "timestamp" ]; then
+    tdesc="seconds running"
+elif [ $metric = "tcp-load" ]; then
+    tdesc="TCP load"
+elif [ $metric = "waiting_udp" ]; then
+    tdesc="UDP waiting buffer size"
+elif [ $metric = "waiting_tcp" ]; then
+    tdesc="TCP waiting buffer size"
+elif [ $metric = "waiting_tls" ]; then
+    tdesc="TLS waiting buffer size"
+elif [ $metric = "total_size" ]; then
+    tdesc="total shared memory"
+elif [ $metric = "used_size" ]; then
+    tdesc="used shared memory"
+elif [ $metric = "real_used_size" ]; then
+    tdesc="used real shared memory (including malloc overhead)"
+elif [ $metric = "max_used_size" ]; then
+    tdesc="maximum used memory"
+elif [ $metric = "free_size" ]; then
+    tdesc="free shared memory"
+elif [ $metric = "fragments" ]; then
+    tdesc="shared memory fragments"
+elif [ $metric = "1xx_replies" ]; then
+    tdesc="1xx replies"
+elif [ $metric = "2xx_replies" ]; then
+    tdesc="2xx replies"
+elif [ $metric = "3xx_replies" ]; then
+    tdesc="3xx replies"
+elif [ $metric = "4xx_replies" ]; then
+    tdesc="4xx replies"
+elif [ $metric = "5xx_replies" ]; then
+    tdesc="5xx replies"
+elif [ $metric = "6xx_replies" ]; then
+    tdesc="6xx replies"
+elif [ $metric = "sent_replies" ]; then
+    tdesc="sent replies"
+elif [ $metric = "sent_err_replies" ]; then
+    tdesc="sent bogus replies"
+elif [ $metric = "received_ACKs" ]; then
+    tdesc="received ACKs"
+elif [ $metric = "received_replies" ]; then
+    tdesc="received replies"
+elif [ $metric = "relayed_replies" ]; then
+    tdesc="relayed replies"
+elif [ $metric = "local_replies" ]; then
+    tdesc="local replies"
+elif [ $metric = "UAS_transactions" ]; then
+    tdesc="transactions created by received requests"
+elif [ $metric = "UAC_transactions" ]; then
+    tdesc="transactions created by local generated requests"
+elif [ $metric = "2xx_transactions" ]; then
+    tdesc="transactions completed with 2xx replies"
+elif [ $metric = "3xx_transactions" ]; then
+    tdesc="transactions completed with 3xx replies"
+elif [ $metric = "4xx_transactions" ]; then
+    tdesc="transactions completed with 4xx replies"
+elif [ $metric = "5xx_transactions" ]; then
+    tdesc="transactions completed with 5xx replies"
+elif [ $metric = "6xx_transactions" ]; then
+    tdesc="transactions completed with 6xx replies"
+elif [ $metric = "inuse_transactions" ]; then
+    tdesc="transactions existing in memory"
+elif [ $metric = "positive_checks" ]; then
+    tdesc="tests executed for which a positive match"
+elif [ $metric = "negative_checks" ]; then
+    tdesc="tests executed for which a negative match"
+elif [ $metric = "registered_users" ]; then
+    tdesc="users in memory for all domains"
+elif [ $metric = "location-users" ]; then
+    tdesc="users in memory"
+elif [ $metric = "location-contacts" ]; then
+    tdesc="contacts in memory"
+elif [ $metric = "location-expires" ]; then
+    tdesc="expired contacts in memory"
+elif [ $metric = "max_expires" ]; then
+    tdesc="max expiration"
+elif [ $metric = "max_contacts" ]; then
+    tdesc="max contacts"
+elif [ $metric = "default_expire" ]; then
+    tdesc="default expiration"
+elif [ $metric = "accepted_regs" ]; then
+    tdesc="accepted registrations"
+elif [ $metric = "rejected_regs" ]; then
+    tdesc="rejected registrations"
+elif [ $metric = "active_dialogs" ]; then
+    tdesc="current active dialogs"
+elif [ $metric = "early_dialogs" ]; then
+    tdesc="early dialogs"
+elif [ $metric = "processed_dialogs" ]; then
+    tdesc="processed dialogs"
+elif [ $metric = "expired_dialogs" ]; then
+    tdesc="expired dialogs"
+elif [ $metric = "failed_dialogs" ]; then
+    tdesc="failed dialogs"
+else
+    echo "Unknown metric $metric!"
+    exit $STATE_UNKNOWN
+fi
+
+# when return code != 0 we had an error!
+$xbase $metric >/dev/null
+if [ $? -ne 0 ]; then
+    echo "openSIPS UNKNOWN - Error while executing opensipsctl"
+    exit $STATE_UNKNOWN
+fi
+
+# check if we still need to get the value
+if [ $tnum -lt 0 ]; then
+    tnum=`$xbase $metric | awk '{ print $3 }'`
+fi
+
+# Print result
+if [ -z $tnum ]; then
+    echo "openSIPS UNKNOWN - Statistics Not Found"
+    exitstatus=$STATE_UNKNOWN
+elif [ $tnum = "Not" ]; then
+    echo "openSIPS UNKNOWN - Statistics Not Found"
+    exitstatus=$STATE_UNKNOWN
+elif [ $tnum -lt 0 ]; then
+    echo "openSIPS UNKNOWN - Could not determine metric $metric"
+    exitstatus=$STATE_UNKNOWN
+    
+elif [ $minimum_thresholds -eq 1 -a $tnum -le $threshold_critical ]; then
+    echo "openSIPS CRITICAL - $tnum $tdesc"
+    exitstatus=$STATE_CRICITAL
+elif [  $minimum_thresholds -eq 1 -a $tnum -le $threshold_warning ]; then
+    echo "openSIPS WARNING - $tnum $tdesc"
+    exitstatus=$STATE_WARNING
+elif [ $minimum_thresholds -eq 1 ]; then
+    echo "openSIPS OK - $tnum $tdesc"
+    exitstatus=$STATE_OK
+    
+elif [ $tnum -ge $threshold_critical ]; then
+    echo "openSIPS CRITICAL - $tnum $tdesc"
+    exitstatus=$STATE_CRICITAL
+elif [ $tnum -ge $threshold_warning ]; then
+    echo "openSIPS WARNING - $tnum $tdesc"
+    exitstatus=$STATE_WARNING
+else
+    echo "openSIPS OK - $tnum $tdesc"
+    exitstatus=$STATE_OK
+fi
+
+# Exit script
+exit $exitstatus
