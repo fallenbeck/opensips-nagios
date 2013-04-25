@@ -130,15 +130,31 @@ while test -n "$1"; do
     shift
 done
 
+# If existatus has been set, return immediately
+# with specified exitstatus
+if [ $exitstatus = "0" ]; then
+    echo "openSIPS OK - This metric will always return OK"
+    exit $STATE_OK
+elif [ $exitstatus = "1" ]; then
+    echo "openSIPS WARNING - This metric will always return WARNING"
+    exit $STATE_WARNING
+elif [ $exitstatus = "2" ]; then
+    echo "openSIPS CRITICAL - This metric will always return CRITICAL"
+    exit $STATE_CRICITAL
+elif [ $exitstatus = "3" ]; then
+    echo "openSIPS UNKNOWN - This metric will always return UNKNOWN"
+    exit $STATE_UNKNOWN
+fi
+
 # If openSIPS ctrl binary does not exist, exit
 if [ -z $OPENSIPSCTL ]; then
-    echo "Path to opensipsctl not specified!"
+    echo "openSIPS UNKNOWN - Path to opensipsctl not specified!"
     exit $STATE_UNKNOWN
 elif [ ! -e $OPENSIPSCTL ]; then
-    echo "Could not find opensipsctl!"
+    echo "openSIPS UNKNOWN - Could not find opensipsctl!"
     exit $STATE_UNKNOWN
 elif [ ! -x $OPENSIPSCTL ]; then
-    echo "Could not execute opensipsctl!"
+    echo "openSIPS UNKNOWN - Could not execute opensipsctl!"
     exit $STATE_UNKNOWN
 fi
 
